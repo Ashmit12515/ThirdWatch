@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.vendors import router as vendors_router
+from app.api.assessments import router as assessments_router
 
 app = FastAPI(
     title="Vendor Risk Governance API",
@@ -9,6 +10,7 @@ app = FastAPI(
 )
 
 app.include_router(vendors_router)
+app.include_router(assessments_router)
 
 
 @app.get("/")
