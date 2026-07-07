@@ -47,67 +47,79 @@ export default function NewAssessmentPage() {
     }
   }
 
-  return (
-    <section>
+return (
+  <section>
+    <div className="page-header">
       <h1>New Vendor Assessment</h1>
+      <p>
+        Enter vendor details and security controls to generate an explainable
+        risk assessment.
+      </p>
+    </div>
 
-      <form onSubmit={handleSubmit}>
-        <label>
-          Vendor name
-          <input
-            required
-            value={form.vendor_name}
-            onChange={(event) => updateField("vendor_name", event.target.value)}
-          />
-        </label>
+    <form className="assessment-form" onSubmit={handleSubmit}>
+      <div className="form-field">
+        <label htmlFor="vendor_name">Vendor name</label>
+        <input
+          id="vendor_name"
+          required
+          value={form.vendor_name}
+          onChange={(event) => updateField("vendor_name", event.target.value)}
+        />
+      </div>
 
-        <label>
-          Industry
-          <input
-            required
-            value={form.industry}
-            onChange={(event) => updateField("industry", event.target.value)}
-          />
-        </label>
+      <div className="form-field">
+        <label htmlFor="industry">Industry</label>
+        <input
+          id="industry"
+          required
+          value={form.industry}
+          onChange={(event) => updateField("industry", event.target.value)}
+        />
+      </div>
 
-        <label>
-          Data type
-          <input
-            required
-            value={form.data_type}
-            onChange={(event) => updateField("data_type", event.target.value)}
-          />
-        </label>
+      <div className="form-field full-width">
+        <label htmlFor="data_type">Data type</label>
+        <input
+          id="data_type"
+          required
+          value={form.data_type}
+          onChange={(event) => updateField("data_type", event.target.value)}
+        />
+      </div>
 
-        <label>
-          Subprocessors count
-          <input
-            type="number"
-            min="0"
-            value={form.subprocessors_count}
-            onChange={(event) =>
-              updateField("subprocessors_count", Number(event.target.value))
-            }
-          />
-        </label>
+      <div className="form-field">
+        <label htmlFor="subprocessors_count">Subprocessors count</label>
+        <input
+          id="subprocessors_count"
+          type="number"
+          min="0"
+          value={form.subprocessors_count}
+          onChange={(event) =>
+            updateField("subprocessors_count", Number(event.target.value))
+          }
+        />
+      </div>
 
-        <label>
-          Criticality
-          <select
-            value={form.criticality}
-            onChange={(event) =>
-              updateField(
-                "criticality",
-                event.target.value as VendorCreate["criticality"],
-              )
-            }
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-        </label>
+      <div className="form-field">
+        <label htmlFor="criticality">Criticality</label>
+        <select
+          id="criticality"
+          value={form.criticality}
+          onChange={(event) =>
+            updateField(
+              "criticality",
+              event.target.value as VendorCreate["criticality"],
+            )
+          }
+        >
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
 
+      <div className="checkbox-grid">
         {[
           ["hosts_pii", "Hosts personally identifiable information"],
           ["has_soc2", "Has SOC 2 certification"],
@@ -116,7 +128,7 @@ export default function NewAssessmentPage() {
           ["encryption_at_rest", "Encryption at rest enabled"],
           ["incident_response_plan", "Incident response plan available"],
         ].map(([field, label]) => (
-          <label key={field}>
+          <label className="checkbox-field" key={field}>
             <input
               type="checkbox"
               checked={form[field as keyof VendorCreate] as boolean}
@@ -130,13 +142,14 @@ export default function NewAssessmentPage() {
             {label}
           </label>
         ))}
+      </div>
 
-        {error && <p>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? "Creating assessment..." : "Create assessment"}
-        </button>
-      </form>
-    </section>
-  );
+      <button type="submit" disabled={submitting}>
+        {submitting ? "Creating assessment..." : "Create assessment"}
+      </button>
+    </form>
+  </section>
+);
 }

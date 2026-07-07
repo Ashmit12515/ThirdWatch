@@ -1,5 +1,5 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
-
+import AssessmentDetailPage from "./pages/AssessmentDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewAssessmentPage from "./pages/NewAssessmentPage";
 
@@ -13,6 +13,7 @@ function App() {
         </nav>
 
         <Routes>
+          <Route path="/assessments/:vendorId" element={<AssessmentDetailPage />}/>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/assessments/new" element={<NewAssessmentPage />} />
         </Routes>

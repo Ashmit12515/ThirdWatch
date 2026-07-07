@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import type { Assessment } from "../types/assessment";
-
+import { Link } from "react-router-dom";
 export default function DashboardPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,10 @@ export default function DashboardPage() {
           <tbody>
             {assessments.map((assessment) => (
               <tr key={assessment.assessment_id}>
-                <td>{assessment.vendor.vendor_name}</td>
+                <td><Link to={`/assessments/${assessment.vendor.vendor_id}`}>
+                {assessment.vendor.vendor_name}
+                </Link>
+                </td>
                 <td>{assessment.vendor.industry}</td>
                 <td>{assessment.risk_score}</td>
                 <td>{assessment.risk_tier}</td>
