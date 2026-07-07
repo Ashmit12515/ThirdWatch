@@ -1,8 +1,12 @@
+from datetime import datetime, timezone
+
 from app.schemas.assessment import RiskAssessment
 from app.schemas.vendor import Vendor
 
+ASSESSMENTS: list[RiskAssessment] = []
 
-def assess_vendor_risk(vendor: Vendor) -> RiskAssessment:
+
+def calculate_vendor_risk(vendor: Vendor) -> tuple[int, str, list[str]]:
     score = 0
     reasons: list[str] = []
 
@@ -50,9 +54,34 @@ def assess_vendor_risk(vendor: Vendor) -> RiskAssessment:
     else:
         tier = "Tier 3"
 
-    return RiskAssessment(
+    return score, tier, reasons
+
+
+def create_risk_assessment(vendor: Vendor) -> RiskAssessment:
+    score, tier, reasons = calculate_vendor_risk(vendor)
+
+    assessment = RiskAssessment(
+        assessment_id=f"A-{len(ASSESSMENTS) + 1:03d}",
         vendor=vendor,
         risk_score=score,
         risk_tier=tier,
         reasons=reasons,
+        created_at=datetime.now(timezone.utc),
     )
+
+    ASSESSMENTS.append(assessment)
+    return assessment
+
+
+def get_all_assessments() -> list[RiskAssessment]:
+    return ASSESSMENTS
+
+
+def get_assessment_by_vendor_id(vendor_id: str) -> RiskAssessment | None:
+    matching_assessments = [
+        assessment
+        for assessment in ASSESSMENTS
+        if assessment.vendor.vendor_id == vendor_id
+    ]
+
+    return matching_assessments[-1] if matching_assessments else None
