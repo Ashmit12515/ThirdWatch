@@ -1,9 +1,12 @@
+import json
 from datetime import datetime, timezone
 
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.models import AssessmentModel, VendorModel
 from app.schemas.assessment import RiskAssessment
 from app.schemas.vendor import Vendor
-
-ASSESSMENTS: list[RiskAssessment] = []
 
 
 def calculate_vendor_risk(vendor: Vendor) -> tuple[int, str, list[str]]:
@@ -57,31 +60,89 @@ def calculate_vendor_risk(vendor: Vendor) -> tuple[int, str, list[str]]:
     return score, tier, reasons
 
 
-def create_risk_assessment(vendor: Vendor) -> RiskAssessment:
-    score, tier, reasons = calculate_vendor_risk(vendor)
-
-    assessment = RiskAssessment(
-        assessment_id=f"A-{len(ASSESSMENTS) + 1:03d}",
+def assessment_model_to_schema(
+    assessment: AssessmentModel,
+    vendor: Vendor,
+) -> RiskAssessment:
+    return RiskAssessment(
+        assessment_id=assessment.assessment_id,
         vendor=vendor,
-        risk_score=score,
-        risk_tier=tier,
-        reasons=reasons,
-        created_at=datetime.now(timezone.utc),
+        risk_score=assessment.risk_score,
+        risk_tier=assessment.risk_tier,
+        reasons=json.loads(assessment.reasons_json),
+        created_at=assessment.created_at,
+        scoring_version=assessment.scoring_version,
     )
 
-    ASSESSMENTS.append(assessment)
-    return assessment
+
+def create_risk_assessment(db: Session, vendor: Vendor) -> RiskAssessment:
+    score, tier, reasons = calculate_vendor_risk(vendor)
+
+    assessment_count = db.query(func.count(AssessmentModel.assessment_id)).scalar() or 0
+    assessment = AssessmentModel(
+        assessment_id=f"A-{assessment_count + 1:03d}",
+        vendor_id=vendor.vendor_id,
+        risk_score=score,
+        risk_tier=tier,
+        reasons_json=json.dumps(reasons),
+        created_at=datetime.now(timezone.utc),
+        scoring_version="v1.0",
+    )
+
+    db.add(assessment)
+    db.commit()
+    db.refresh(assessment)
+
+    return assessment_model_to_schema(assessment, vendor)
 
 
-def get_all_assessments() -> list[RiskAssessment]:
-    return ASSESSMENTS
+def get_all_assessments(db: Session) -> list[RiskAssessment]:
+    assessments = (
+        db.query(AssessmentModel)
+        .order_by(AssessmentModel.created_at.desc())
+        .all()
+    )
+
+    results: list[RiskAssessment] = []
+
+    for assessment in assessments:
+        vendor = db.get(VendorModel, assessment.vendor_id)
+
+        if vendor:
+            from app.services.vendor_service import vendor_model_to_schema
+
+            results.append(
+                assessment_model_to_schema(
+                    assessment,
+                    vendor_model_to_schema(vendor),
+                )
+            )
+
+    return results
 
 
-def get_assessment_by_vendor_id(vendor_id: str) -> RiskAssessment | None:
-    matching_assessments = [
-        assessment
-        for assessment in ASSESSMENTS
-        if assessment.vendor.vendor_id == vendor_id
-    ]
+def get_assessment_by_vendor_id(
+    db: Session,
+    vendor_id: str,
+) -> RiskAssessment | None:
+    assessment = (
+        db.query(AssessmentModel)
+        .filter(AssessmentModel.vendor_id == vendor_id)
+        .order_by(AssessmentModel.created_at.desc())
+        .first()
+    )
 
-    return matching_assessments[-1] if matching_assessments else None
+    if assessment is None:
+        return None
+
+    from app.services.vendor_service import vendor_model_to_schema
+
+    vendor = db.get(VendorModel, assessment.vendor_id)
+
+    if vendor is None:
+        return None
+
+    return assessment_model_to_schema(
+        assessment,
+        vendor_model_to_schema(vendor),
+    )

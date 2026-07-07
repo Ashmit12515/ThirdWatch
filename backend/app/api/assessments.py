@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
+from app.database import get_db
 from app.schemas.assessment import RiskAssessment
 from app.schemas.vendor import VendorCreate
 from app.services.risk_scoring import (
@@ -17,19 +19,27 @@ router = APIRouter(prefix="/api/v1/assessments", tags=["Assessments"])
     response_model=RiskAssessment,
     status_code=status.HTTP_201_CREATED,
 )
-def create_vendor_assessment(vendor_data: VendorCreate) -> RiskAssessment:
-    vendor = create_vendor(vendor_data)
-    return create_risk_assessment(vendor)
+def create_vendor_assessment(
+    vendor_data: VendorCreate,
+    db: Session = Depends(get_db),
+) -> RiskAssessment:
+    vendor = create_vendor(db, vendor_data)
+    return create_risk_assessment(db, vendor)
 
 
 @router.get("/", response_model=list[RiskAssessment])
-def list_assessments() -> list[RiskAssessment]:
-    return get_all_assessments()
+def list_assessments(
+    db: Session = Depends(get_db),
+) -> list[RiskAssessment]:
+    return get_all_assessments(db)
 
 
 @router.get("/{vendor_id}", response_model=RiskAssessment)
-def get_vendor_assessment(vendor_id: str) -> RiskAssessment:
-    vendor = get_vendor_by_id(vendor_id)
+def get_vendor_assessment(
+    vendor_id: str,
+    db: Session = Depends(get_db),
+) -> RiskAssessment:
+    vendor = get_vendor_by_id(db, vendor_id)
 
     if vendor is None:
         raise HTTPException(
@@ -37,7 +47,7 @@ def get_vendor_assessment(vendor_id: str) -> RiskAssessment:
             detail=f"Vendor '{vendor_id}' was not found.",
         )
 
-    assessment = get_assessment_by_vendor_id(vendor_id)
+    assessment = get_assessment_by_vendor_id(db, vendor_id)
 
     if assessment is None:
         raise HTTPException(

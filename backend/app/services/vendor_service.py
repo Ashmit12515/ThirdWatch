@@ -1,58 +1,43 @@
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.models import VendorModel
 from app.schemas.vendor import Vendor, VendorCreate
 
-VENDORS: list[Vendor] = [
-    Vendor(
-        vendor_id="V-001",
-        vendor_name="CloudLedger Solutions",
-        industry="FinTech",
-        data_type="Financial and personal data",
-        hosts_pii=True,
-        has_soc2=True,
-        has_iso27001=True,
-        mfa_enabled=True,
-        encryption_at_rest=True,
-        incident_response_plan=True,
-        subprocessors_count=3,
-        criticality="High",
-        expected_risk_tier="Tier 1",
-    ),
-    Vendor(
-        vendor_id="V-002",
-        vendor_name="QuickSurvey Labs",
-        industry="Market Research",
-        data_type="Customer survey data",
-        hosts_pii=True,
-        has_soc2=False,
-        has_iso27001=False,
-        mfa_enabled=True,
-        encryption_at_rest=True,
-        incident_response_plan=False,
-        subprocessors_count=7,
-        criticality="Medium",
-        expected_risk_tier="Tier 2",
-    ),
-    Vendor(
-        vendor_id="V-003",
-        vendor_name="OfficeFlow Tools",
-        industry="Productivity SaaS",
-        data_type="Non-sensitive operational data",
-        hosts_pii=False,
-        has_soc2=False,
-        has_iso27001=False,
-        mfa_enabled=False,
-        encryption_at_rest=False,
-        incident_response_plan=False,
-        subprocessors_count=1,
-        criticality="Low",
-        expected_risk_tier="Tier 3",
-    ),
-]
 
-def create_vendor(vendor_data: VendorCreate) -> Vendor:
-    next_vendor_number = len(VENDORS) + 1
-    vendor_id = f"V-{next_vendor_number:03d}"
+def vendor_model_to_schema(vendor: VendorModel) -> Vendor:
+    return Vendor(
+        vendor_id=vendor.vendor_id,
+        vendor_name=vendor.vendor_name,
+        industry=vendor.industry,
+        data_type=vendor.data_type,
+        hosts_pii=vendor.hosts_pii,
+        has_soc2=vendor.has_soc2,
+        has_iso27001=vendor.has_iso27001,
+        mfa_enabled=vendor.mfa_enabled,
+        encryption_at_rest=vendor.encryption_at_rest,
+        incident_response_plan=vendor.incident_response_plan,
+        subprocessors_count=vendor.subprocessors_count,
+        criticality=vendor.criticality,
+        expected_risk_tier=vendor.expected_risk_tier,
+    )
 
-    vendor = Vendor(
+
+def get_all_vendors(db: Session) -> list[Vendor]:
+    vendors = db.query(VendorModel).order_by(VendorModel.vendor_id).all()
+    return [vendor_model_to_schema(vendor) for vendor in vendors]
+
+
+def get_vendor_by_id(db: Session, vendor_id: str) -> Vendor | None:
+    vendor = db.get(VendorModel, vendor_id)
+    return vendor_model_to_schema(vendor) if vendor else None
+
+
+def create_vendor(db: Session, vendor_data: VendorCreate) -> Vendor:
+    vendor_count = db.query(func.count(VendorModel.vendor_id)).scalar() or 0
+    vendor_id = f"V-{vendor_count + 1:03d}"
+
+    vendor = VendorModel(
         vendor_id=vendor_id,
         vendor_name=vendor_data.vendor_name,
         industry=vendor_data.industry,
@@ -68,12 +53,8 @@ def create_vendor(vendor_data: VendorCreate) -> Vendor:
         expected_risk_tier="Pending assessment",
     )
 
-    VENDORS.append(vendor)
-    return vendor
+    db.add(vendor)
+    db.commit()
+    db.refresh(vendor)
 
-def get_all_vendors() -> list[Vendor]:
-    return VENDORS
-
-
-def get_vendor_by_id(vendor_id: str) -> Vendor | None:
-    return next((vendor for vendor in VENDORS if vendor.vendor_id == vendor_id), None)
+    return vendor_model_to_schema(vendor)
