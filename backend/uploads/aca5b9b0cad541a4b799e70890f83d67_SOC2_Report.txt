@@ -1,0 +1,4 @@
+SOC 2 Type II report available.
+MFA is enabled for all administrative users.
+Encryption at rest is enabled using AES-256.
+Incident response plan was last reviewed in January 2026.

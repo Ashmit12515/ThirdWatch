@@ -46,3 +46,19 @@ class AssessmentModel(Base):
         default="v1.0",
         nullable=False,
     )
+
+class EvidenceModel(Base):
+    __tablename__ = "evidence_files"
+
+    evidence_id: Mapped[str] = mapped_column(String, primary_key=True)
+    vendor_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
+    content_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
