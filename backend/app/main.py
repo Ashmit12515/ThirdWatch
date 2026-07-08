@@ -4,6 +4,7 @@ from app.api.vendors import router as vendors_router
 from app.api.assessments import router as assessments_router
 from app.database import Base, engine
 from app.api import evidence
+from app.api import extractions
 from app import models
 
 Base.metadata.create_all(bind=engine)
@@ -24,6 +25,7 @@ app.add_middleware(
 app.include_router(vendors_router)
 app.include_router(assessments_router)
 app.include_router(evidence.router)
+app.include_router(extractions.router)
 
 @app.get("/")
 def root():
