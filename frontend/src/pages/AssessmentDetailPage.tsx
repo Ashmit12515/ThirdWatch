@@ -14,12 +14,31 @@ type EvidenceFile = {
   uploaded_at: string;
 };
 
+type ControlFinding = {
+  control: string;
+  status: string;
+  evidence_text: string;
+};
+
+type EvidenceExtraction = {
+  evidence_id: string;
+  vendor_id: string;
+  findings: ControlFinding[];
+};
+
 export default function AssessmentDetailPage() {
   const { vendorId } = useParams<{ vendorId: string }>();
 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const [extractions, setExtractions] = useState<
+    Record<string, EvidenceExtraction>
+  >({});
+  const [extractingEvidenceId, setExtractingEvidenceId] = useState<
+    string | null
+  >(null);
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -78,10 +97,7 @@ export default function AssessmentDetailPage() {
         formData,
       );
 
-      setEvidenceFiles((currentFiles) => [
-        response.data,
-        ...currentFiles,
-      ]);
+      setEvidenceFiles((currentFiles) => [response.data, ...currentFiles]);
 
       setSelectedFile(null);
       setUploadMessage(`Uploaded ${response.data.file_name}.`);
@@ -98,6 +114,27 @@ export default function AssessmentDetailPage() {
       setError("Upload failed. Only non-empty .txt and .pdf files are allowed.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleExtractControls = async (evidenceId: string) => {
+    try {
+      setExtractingEvidenceId(evidenceId);
+      setError("");
+
+      const response = await api.get<EvidenceExtraction>(
+        `/extractions/${evidenceId}`,
+      );
+
+      setExtractions((current) => ({
+        ...current,
+        [evidenceId]: response.data,
+      }));
+    } catch (extractionError) {
+      console.error("Evidence extraction failed:", extractionError);
+      setError("Could not extract controls from this evidence file.");
+    } finally {
+      setExtractingEvidenceId(null);
     }
   };
 
@@ -124,7 +161,8 @@ export default function AssessmentDetailPage() {
         <Link to="/">← Back to dashboard</Link>
         <h1>{assessment.vendor.vendor_name}</h1>
         <p>
-          {assessment.vendor.industry} · {assessment.vendor.criticality} criticality
+          {assessment.vendor.industry} · {assessment.vendor.criticality}{" "}
+          criticality
         </p>
       </div>
 
@@ -136,7 +174,11 @@ export default function AssessmentDetailPage() {
 
         <article className="detail-card">
           <span>Risk tier</span>
-          <strong className={`tier-badge ${assessment.risk_tier.toLowerCase().replace(" ", "-")}`}>
+          <strong
+            className={`tier-badge ${assessment.risk_tier
+              .toLowerCase()
+              .replace(" ", "-")}`}
+          >
             {assessment.risk_tier}
           </strong>
         </article>
@@ -192,15 +234,54 @@ export default function AssessmentDetailPage() {
         ) : (
           <ul className="evidence-list">
             {evidenceFiles.map((file) => (
-              <li key={file.evidence_id}>
-                <div>
+              <li key={file.evidence_id} className="evidence-item">
+                <div className="evidence-file-info">
                   <strong>{file.file_name}</strong>
                   <span>
                     {file.content_type ?? "Unknown file type"} · Uploaded{" "}
                     {new Date(file.uploaded_at).toLocaleString()}
                   </span>
                 </div>
-                <span className="evidence-id">{file.evidence_id}</span>
+
+                <div className="evidence-actions">
+                  <span className="evidence-id">{file.evidence_id}</span>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => handleExtractControls(file.evidence_id)}
+                    disabled={extractingEvidenceId === file.evidence_id}
+                  >
+                    {extractingEvidenceId === file.evidence_id
+                      ? "Extracting..."
+                      : "Extract controls"}
+                  </button>
+                </div>
+
+                {extractions[file.evidence_id] && (
+                  <div className="extraction-results">
+                    <h3>Detected controls</h3>
+
+                    {extractions[file.evidence_id].findings.length === 0 ? (
+                      <p className="muted-text">
+                        No supported controls were detected in this file.
+                      </p>
+                    ) : (
+                      <ul>
+                        {extractions[file.evidence_id].findings.map(
+                          (finding) => (
+                            <li
+                              key={`${file.evidence_id}-${finding.control}`}
+                            >
+                              <strong>{finding.control}</strong>
+                              <span>{finding.status}</span>
+                              <p>{finding.evidence_text}</p>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
