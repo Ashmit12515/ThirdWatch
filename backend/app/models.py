@@ -62,6 +62,7 @@ class EvidenceModel(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
 class ExtractionModel(Base):
     __tablename__ = "extractions"
 

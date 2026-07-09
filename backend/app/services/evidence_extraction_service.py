@@ -104,7 +104,9 @@ def extract_control_findings(
                     )
                 )
 
-    extraction_count = db.query(func.count(ExtractionModel.extraction_id)).scalar() or 0
+    extraction_count = (
+        db.query(func.count(ExtractionModel.extraction_id)).scalar() or 0
+    )
 
     extraction = ExtractionModel(
         extraction_id=f"X-{extraction_count + 1:03d}",
