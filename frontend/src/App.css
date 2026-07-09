@@ -62,7 +62,6 @@ a:hover {
   font-weight: 600;
 }
 
-input,
 input:not([type="checkbox"]),
 select {
   width: 100%;
@@ -115,7 +114,6 @@ select {
 }
 
 button {
-  grid-column: 1 / -1;
   width: fit-content;
   padding: 0.75rem 1rem;
   border: 0;
@@ -127,6 +125,10 @@ button {
   cursor: pointer;
 }
 
+.assessment-form > button {
+  grid-column: 1 / -1;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
@@ -136,6 +138,14 @@ button:disabled {
   grid-column: 1 / -1;
   margin: 0;
   color: #ff9a9a;
+}
+
+.success-message {
+  color: #a9e9ba;
+}
+
+.muted-text {
+  color: #aeb8c8;
 }
 
 table {
@@ -167,16 +177,6 @@ td:nth-child(2) {
   min-width: 230px;
 }
 
-@media (max-width: 700px) {
-  main {
-    padding: 1rem;
-  }
-
-  .assessment-form {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-  }
-}
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -276,15 +276,6 @@ td:nth-child(2) {
   color: #c7f6d7;
 }
 
-@media (max-width: 800px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dashboard-header {
-    flex-direction: column;
-  }
-}
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -338,27 +329,23 @@ td:nth-child(2) {
 }
 
 .upload-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   margin: 1.25rem 0;
 }
 
 .upload-row input[type="file"] {
-  max-width: 420px;
+  width: 100%;
+  max-width: none;
   padding: 0.6rem;
 }
 
 .upload-row button {
   width: auto;
-}
-
-.success-message {
-  color: #a9e9ba;
-}
-
-.muted-text {
-  color: #aeb8c8;
+  min-width: 178px;
+  white-space: nowrap;
 }
 
 .evidence-list {
@@ -367,58 +354,17 @@ td:nth-child(2) {
   padding: 0;
 }
 
-.evidence-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.evidence-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
-  padding: 1rem 0;
+  align-items: start;
+  padding: 1.25rem 0;
   border-top: 1px solid #2d3340;
 }
 
-.evidence-list li strong,
-.evidence-list li span {
-  display: block;
-}
-
-.evidence-list li span {
-  margin-top: 0.3rem;
-  color: #aeb8c8;
-  font-size: 0.85rem;
-}
-
-.evidence-id {
-  white-space: nowrap;
-  color: #a9c7ff !important;
-}
-
-@media (max-width: 800px) {
-  .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .upload-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 500px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .evidence-list li {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-
-.evidence-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: center;
+.evidence-file-info {
+  min-width: 0;
 }
 
 .evidence-file-info strong,
@@ -426,10 +372,23 @@ td:nth-child(2) {
   display: block;
 }
 
+.evidence-file-info span {
+  margin-top: 0.3rem;
+  color: #aeb8c8;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
 .evidence-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.evidence-id {
+  white-space: nowrap;
+  color: #a9c7ff !important;
+  font-size: 0.85rem;
 }
 
 .secondary-button {
@@ -448,6 +407,9 @@ td:nth-child(2) {
 
 .extraction-results {
   grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.25rem;
   padding: 1rem;
   border: 1px solid #2d3340;
   border-radius: 10px;
@@ -491,6 +453,35 @@ td:nth-child(2) {
   color: #c9d1dc;
 }
 
+@media (max-width: 800px) {
+  main {
+    padding: 1rem;
+  }
+
+  .assessment-form {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .summary-grid,
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .upload-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .upload-row input[type="file"] {
+    max-width: none;
+  }
+}
+
 @media (max-width: 600px) {
   .evidence-item {
     grid-template-columns: 1fr;
@@ -498,5 +489,16 @@ td:nth-child(2) {
 
   .evidence-actions {
     justify-content: space-between;
+  }
+
+  .upload-row button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 500px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }

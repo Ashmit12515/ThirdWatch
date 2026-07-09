@@ -62,3 +62,21 @@ class EvidenceModel(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+class ExtractionModel(Base):
+    __tablename__ = "extractions"
+
+    extraction_id: Mapped[str] = mapped_column(String, primary_key=True)
+    evidence_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    vendor_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+
+    findings_json: Mapped[str] = mapped_column(Text, nullable=False)
+    extraction_method: Mapped[str] = mapped_column(
+        String,
+        default="rule_based_v1",
+        nullable=False,
+    )
+    extracted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
