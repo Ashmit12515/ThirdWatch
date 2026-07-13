@@ -502,3 +502,32 @@ td:nth-child(2) {
     grid-template-columns: 1fr;
   }
 }
+.recalculate-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.recalculate-row button {
+  width: auto;
+}
+
+@media (max-width: 600px) {
+  .recalculate-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recalculate-row button {
+    width: 100%;
+  }
+}
+code {
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  background: #11151d;
+  color: #8eb5ff;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 0.85rem;
+}

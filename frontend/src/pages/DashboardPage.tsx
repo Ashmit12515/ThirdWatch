@@ -19,9 +19,15 @@ export default function DashboardPage() {
   const summary = useMemo(() => {
     return {
       total: assessments.length,
-      tier1: assessments.filter((item) => item.risk_tier === "Tier 1").length,
-      tier2: assessments.filter((item) => item.risk_tier === "Tier 2").length,
-      tier3: assessments.filter((item) => item.risk_tier === "Tier 3").length,
+      tier1: assessments.filter(
+        (assessment) => assessment.risk_tier === "Tier 1",
+      ).length,
+      tier2: assessments.filter(
+        (assessment) => assessment.risk_tier === "Tier 2",
+      ).length,
+      tier3: assessments.filter(
+        (assessment) => assessment.risk_tier === "Tier 3",
+      ).length,
     };
   }, [assessments]);
 
@@ -32,6 +38,7 @@ export default function DashboardPage() {
           <h1>Vendor Risk Governance</h1>
           <p>Explainable vendor assessments with audit metadata.</p>
         </div>
+
         <Link className="primary-link" to="/assessments/new">
           New assessment
         </Link>
@@ -42,14 +49,17 @@ export default function DashboardPage() {
           <span>Total assessments</span>
           <strong>{summary.total}</strong>
         </article>
+
         <article className="summary-card tier-1-card">
           <span>Tier 1 risk</span>
           <strong>{summary.tier1}</strong>
         </article>
+
         <article className="summary-card tier-2-card">
           <span>Tier 2 risk</span>
           <strong>{summary.tier2}</strong>
         </article>
+
         <article className="summary-card tier-3-card">
           <span>Tier 3 risk</span>
           <strong>{summary.tier3}</strong>
@@ -61,7 +71,11 @@ export default function DashboardPage() {
       ) : assessments.length === 0 ? (
         <div className="empty-state">
           <h2>No assessments yet</h2>
-          <p>Create your first vendor assessment to populate the dashboard.</p>
+
+          <p>
+            Create your first vendor assessment to populate the dashboard.
+          </p>
+
           <Link className="primary-link" to="/assessments/new">
             Create assessment
           </Link>
@@ -72,22 +86,33 @@ export default function DashboardPage() {
             <thead>
               <tr>
                 <th>Vendor</th>
+                <th>Vendor ID</th>
                 <th>Industry</th>
                 <th>Score</th>
                 <th>Tier</th>
                 <th>Assessment ID</th>
               </tr>
             </thead>
+
             <tbody>
               {assessments.map((assessment) => (
                 <tr key={assessment.assessment_id}>
                   <td>
-                    <Link to={`/assessments/${assessment.vendor.vendor_id}`}>
+                    <Link
+                      to={`/assessments/${assessment.vendor.vendor_id}`}
+                    >
                       {assessment.vendor.vendor_name}
                     </Link>
                   </td>
+
+                  <td>
+                    <code>{assessment.vendor.vendor_id}</code>
+                  </td>
+
                   <td>{assessment.vendor.industry}</td>
+
                   <td>{assessment.risk_score}</td>
+
                   <td>
                     <span
                       className={`tier-badge ${assessment.risk_tier
@@ -97,6 +122,7 @@ export default function DashboardPage() {
                       {assessment.risk_tier}
                     </span>
                   </td>
+
                   <td>{assessment.assessment_id}</td>
                 </tr>
               ))}

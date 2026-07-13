@@ -1,0 +1,21 @@
+Northstar Health Cloud
+SOC 2 Type II Examination Report Summary
+Reporting Period: January 1, 2025 to December 31, 2025
+
+Security Controls
+
+Northstar Health Cloud maintains a current SOC 2 Type II report.
+
+Multi-factor authentication is required for all privileged accounts,
+administrative users, production access, and remote access.
+
+All customer data and backups are protected using AES-256 encryption at rest.
+
+An incident response plan is documented, tested annually, and reviewed
+following material security events.
+
+The organization maintains ISO 27001 certification for its information
+security management system.
+
+Subprocessors are reviewed annually and are subject to contractual
+security and privacy requirements.

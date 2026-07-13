@@ -24,6 +24,8 @@ type EvidenceExtraction = {
   evidence_id: string;
   vendor_id: string;
   findings: ControlFinding[];
+  extraction_method?: string;
+  extracted_at?: string;
 };
 
 export default function AssessmentDetailPage() {
@@ -39,6 +41,9 @@ export default function AssessmentDetailPage() {
   const [extractingEvidenceId, setExtractingEvidenceId] = useState<
     string | null
   >(null);
+
+  const [recalculating, setRecalculating] = useState(false);
+  const [recalculateMessage, setRecalculateMessage] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -73,6 +78,7 @@ export default function AssessmentDetailPage() {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
+
     setSelectedFile(file);
     setUploadMessage("");
     setError("");
@@ -98,7 +104,6 @@ export default function AssessmentDetailPage() {
       );
 
       setEvidenceFiles((currentFiles) => [response.data, ...currentFiles]);
-
       setSelectedFile(null);
       setUploadMessage(`Uploaded ${response.data.file_name}.`);
 
@@ -135,6 +140,30 @@ export default function AssessmentDetailPage() {
       setError("Could not extract controls from this evidence file.");
     } finally {
       setExtractingEvidenceId(null);
+    }
+  };
+
+  const handleRecalculate = async () => {
+    if (!vendorId) return;
+
+    try {
+      setRecalculating(true);
+      setError("");
+      setRecalculateMessage("");
+
+      const response = await api.post<Assessment>(
+        `/assessments/${vendorId}/recalculate`,
+      );
+
+      setAssessment(response.data);
+      setRecalculateMessage(
+        "Risk score recalculated using verified evidence controls.",
+      );
+    } catch (recalculateError) {
+      console.error("Risk recalculation failed:", recalculateError);
+      setError("Could not recalculate the risk score.");
+    } finally {
+      setRecalculating(false);
     }
   };
 
@@ -196,11 +225,18 @@ export default function AssessmentDetailPage() {
 
       <div className="detail-section">
         <h2>Risk rationale</h2>
-        <ul className="reason-list">
-          {assessment.reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
+
+        {assessment.reasons.length === 0 ? (
+          <p className="muted-text">
+            No active risk factors remain after evidence verification.
+          </p>
+        ) : (
+          <ul className="reason-list">
+            {assessment.reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="detail-section evidence-section">
@@ -227,6 +263,23 @@ export default function AssessmentDetailPage() {
         </div>
 
         {uploadMessage && <p className="success-message">{uploadMessage}</p>}
+
+        <div className="recalculate-row">
+          <button
+            type="button"
+            onClick={handleRecalculate}
+            disabled={recalculating || evidenceFiles.length === 0}
+          >
+            {recalculating
+              ? "Recalculating..."
+              : "Recalculate risk from evidence"}
+          </button>
+
+          {recalculateMessage && (
+            <p className="success-message">{recalculateMessage}</p>
+          )}
+        </div>
+
         {error && <p className="error-message">{error}</p>}
 
         {evidenceFiles.length === 0 ? (
@@ -245,6 +298,7 @@ export default function AssessmentDetailPage() {
 
                 <div className="evidence-actions">
                   <span className="evidence-id">{file.evidence_id}</span>
+
                   <button
                     type="button"
                     className="secondary-button"
