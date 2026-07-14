@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.models import EvidenceModel, ExtractionModel
 from app.schemas.extraction import ControlFinding, EvidenceExtraction
+from app.ai.control_extraction import extract_controls
 
 
-CONTROL_RULES = {
+LEGACY_CONTROL_RULES = {
     "SOC 2": ["soc 2", "soc2", "soc 2 type ii", "soc 2 type 2"],
     "ISO 27001": ["iso 27001", "iso27001"],
     "MFA": ["mfa", "multi-factor authentication", "multifactor authentication"],
@@ -27,7 +28,7 @@ CONTROL_RULES = {
 }
 
 
-def find_matching_line(text: str, keywords: list[str]) -> str | None:
+def legacy_find_matching_line(text: str, keywords: list[str]) -> str | None:
     for line in text.splitlines():
         normalized_line = line.strip().lower()
 
@@ -91,18 +92,23 @@ def extract_control_findings(
             return None
 
         text = file_path.read_text(encoding="utf-8", errors="ignore")
+        print("=" * 60)
+        print("LLM EXTRACTION STARTED")
+        print("=" * 60)
+        llm_result=extract_controls(text)
+        print(llm_result)
+        print("=" * 60)
+        print("LLM EXTRACTION FINISHED")
+        print("=" * 60)
+        for finding in llm_result.findings:
+            findings.append(
+                ControlFinding(
+                    control=finding.control.value,
+                    status="Detected" if finding.implemented else "Not Detected",
+                    evidence_text=finding.evidence
 
-        for control, keywords in CONTROL_RULES.items():
-            matching_line = find_matching_line(text, keywords)
-
-            if matching_line:
-                findings.append(
-                    ControlFinding(
-                        control=control,
-                        status="Detected",
-                        evidence_text=matching_line,
-                    )
                 )
+            )
 
     extraction_count = (
         db.query(func.count(ExtractionModel.extraction_id)).scalar() or 0
@@ -115,7 +121,7 @@ def extract_control_findings(
         findings_json=json.dumps(
             [finding.model_dump() for finding in findings],
         ),
-        extraction_method="rule_based_v1",
+        extraction_method="llm_v1",
         extracted_at=datetime.now(timezone.utc),
     )
 
