@@ -1,4 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,6 +16,7 @@ from app.services.risk_scoring import (
     get_all_assessments,
     get_assessment_by_vendor_id,
 )
+from app.services.evidence_service import save_evidence_file
 from app.services.vendor_service import create_vendor, get_vendor_by_id
 from app.services.risk_scoring import (
     create_risk_assessment,
@@ -25,12 +33,37 @@ router = APIRouter(prefix="/api/v1/assessments", tags=["Assessments"])
     response_model=RiskAssessment,
     status_code=status.HTTP_201_CREATED,
 )
-def create_vendor_assessment(
-    vendor_data: VendorCreate,
+async def create_vendor_assessment(
+    vendor_data: str = Form(...),
+    evidence_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ) -> RiskAssessment:
-    vendor = create_vendor(db, vendor_data)
-    return create_risk_assessment(db, vendor)
+
+    vendor = VendorCreate.model_validate_json(vendor_data)
+
+    created_vendor = create_vendor(
+        db,
+        vendor,
+    )
+
+    assessment = create_risk_assessment(
+        db,
+        created_vendor,
+    )
+
+    if evidence_file is not None:
+
+        file_bytes = await evidence_file.read()
+
+        save_evidence_file(
+            db=db,
+            vendor_id=created_vendor.vendor_id,
+            original_file_name=evidence_file.filename,
+            content_type=evidence_file.content_type,
+            file_bytes=file_bytes,
+        )
+
+    return assessment
 
 
 @router.get("/", response_model=list[RiskAssessment])
